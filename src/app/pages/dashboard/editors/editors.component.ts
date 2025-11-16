@@ -32,7 +32,7 @@ export class EditorsComponent implements OnInit {
   readonly filters = signal<UserFilters>({
     page: 1,
     limit: 10,
-    role: 'Éditeur', // Only show editors
+    role: undefined, // Not needed for editors endpoint
     isActive: undefined,
     search: ''
   });
@@ -66,7 +66,7 @@ export class EditorsComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.userService.getAll(this.filters()).subscribe({
+    this.userService.getAllEditors(this.filters()).subscribe({
       next: (response: UserResponse) => {
         this.editors.set(response.users);
         this.pagination.set(response.pagination);

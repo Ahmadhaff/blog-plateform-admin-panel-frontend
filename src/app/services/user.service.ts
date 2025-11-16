@@ -49,5 +49,24 @@ export class UserService {
   createEditor(data: { email: string; password: string; username?: string }): Observable<{ message: string; user: User }> {
     return this.http.post<{ message: string; user: User }>(`${this.baseUrl}/users/editors`, data);
   }
+
+  getAllEditors(filters?: UserFilters): Observable<UserResponse> {
+    let params = new HttpParams();
+    
+    if (filters?.page) {
+      params = params.set('page', filters.page.toString());
+    }
+    if (filters?.limit) {
+      params = params.set('limit', filters.limit.toString());
+    }
+    if (filters?.isActive !== undefined && filters.isActive !== '') {
+      params = params.set('isActive', filters.isActive);
+    }
+    if (filters?.search) {
+      params = params.set('search', filters.search);
+    }
+
+    return this.http.get<UserResponse>(`${this.baseUrl}/users/editors`, { params });
+  }
 }
 
