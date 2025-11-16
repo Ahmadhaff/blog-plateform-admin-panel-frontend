@@ -82,82 +82,84 @@
           </div>
         </div>
         <div class="header-right">
-          <!-- Notifications Icon -->
-          <div class="notification-container">
-            <button 
-              type="button" 
-              class="header-icon-btn" 
-              [class.has-notifications]="hasNotifications()" 
-              (click)="toggleNotificationDropdown()"
-              title="Notifications">
-              <span class="material-symbols-rounded">notifications</span>
-              @if (hasNotifications()) {
-                <span class="notification-badge">{{ notificationCount() > 99 ? '99+' : notificationCount() }}</span>
-              }
-            </button>
+          <!-- Notifications Icon - Admin only -->
+          @if (isAdmin()) {
+            <div class="notification-container">
+              <button 
+                type="button" 
+                class="header-icon-btn" 
+                [class.has-notifications]="hasNotifications()" 
+                (click)="toggleNotificationDropdown()"
+                title="Notifications">
+                <span class="material-symbols-rounded">notifications</span>
+                @if (hasNotifications()) {
+                  <span class="notification-badge">{{ notificationCount() > 99 ? '99+' : notificationCount() }}</span>
+                }
+              </button>
 
-            @if (showNotificationDropdown()) {
-              <div class="notification-dropdown" (click)="$event.stopPropagation()">
-                <div class="notification-dropdown__header">
-                  <h3>Notifications</h3>
-                  @if (notificationCount() > 0) {
-                    <button 
-                      type="button" 
-                      class="mark-all-read-btn"
-                      (click)="markAllAsRead()">
-                      Mark all as read
-                    </button>
-                  }
-                </div>
-                <div class="notification-dropdown__body">
-                  @if (notifications().length > 0) {
-                    @for (notification of notifications(); track notification._id || notification.id) {
-                      <div 
-                        class="notification-item"
-                        [class.unread]="!notification.read"
-                        (click)="onNotificationClick(notification)">
-                        <div class="notification-item__icon">
-                          @switch (notification.type) {
-                            @case ('new_article') {
-                              <span class="material-symbols-rounded">article</span>
+              @if (showNotificationDropdown()) {
+                <div class="notification-dropdown" (click)="$event.stopPropagation()">
+                  <div class="notification-dropdown__header">
+                    <h3>Notifications</h3>
+                    @if (notificationCount() > 0) {
+                      <button 
+                        type="button" 
+                        class="mark-all-read-btn"
+                        (click)="markAllAsRead()">
+                        Mark all as read
+                      </button>
+                    }
+                  </div>
+                  <div class="notification-dropdown__body">
+                    @if (notifications().length > 0) {
+                      @for (notification of notifications(); track notification._id || notification.id) {
+                        <div 
+                          class="notification-item"
+                          [class.unread]="!notification.read"
+                          (click)="onNotificationClick(notification)">
+                          <div class="notification-item__icon">
+                            @switch (notification.type) {
+                              @case ('new_article') {
+                                <span class="material-symbols-rounded">article</span>
+                              }
+                              @case ('new_comment') {
+                                <span class="material-symbols-rounded">comment</span>
+                              }
+                              @case ('comment_reply') {
+                                <span class="material-symbols-rounded">reply</span>
+                              }
+                              @case ('article_liked') {
+                                <span class="material-symbols-rounded">favorite</span>
+                              }
+                              @case ('comment_liked') {
+                                <span class="material-symbols-rounded">thumb_up</span>
+                              }
+                              @default {
+                                <span class="material-symbols-rounded">notifications</span>
+                              }
                             }
-                            @case ('new_comment') {
-                              <span class="material-symbols-rounded">comment</span>
-                            }
-                            @case ('comment_reply') {
-                              <span class="material-symbols-rounded">reply</span>
-                            }
-                            @case ('article_liked') {
-                              <span class="material-symbols-rounded">favorite</span>
-                            }
-                            @case ('comment_liked') {
-                              <span class="material-symbols-rounded">thumb_up</span>
-                            }
-                            @default {
-                              <span class="material-symbols-rounded">notifications</span>
-                            }
+                          </div>
+                          <div class="notification-item__content">
+                            <div class="notification-item__title">{{ notification.title }}</div>
+                            <div class="notification-item__message">{{ notification.message }}</div>
+                            <div class="notification-item__time">{{ notification.createdAt | date:'short' }}</div>
+                          </div>
+                          @if (!notification.read) {
+                            <div class="notification-item__indicator"></div>
                           }
                         </div>
-                        <div class="notification-item__content">
-                          <div class="notification-item__title">{{ notification.title }}</div>
-                          <div class="notification-item__message">{{ notification.message }}</div>
-                          <div class="notification-item__time">{{ notification.createdAt | date:'short' }}</div>
-                        </div>
-                        @if (!notification.read) {
-                          <div class="notification-item__indicator"></div>
-                        }
+                      }
+                    } @else {
+                      <div class="notification-empty">
+                        <span class="material-symbols-rounded">notifications_off</span>
+                        <p>No notifications</p>
                       </div>
                     }
-                  } @else {
-                    <div class="notification-empty">
-                      <span class="material-symbols-rounded">notifications_off</span>
-                      <p>No notifications</p>
-                    </div>
-                  }
+                  </div>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
           
           <!-- User Info -->
           <div class="header-user">

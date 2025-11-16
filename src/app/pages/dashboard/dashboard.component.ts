@@ -47,10 +47,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.currentUser.set(user);
     this.isAdmin.set(this.authService.isAdmin());
 
-    // Connect to WebSocket and load notifications
-    this.connectSocket();
-    this.loadNotifications();
-    this.setupNotificationListeners();
+    // Notifications are for Admin only
+    if (this.isAdmin()) {
+      // Connect to WebSocket and load notifications for admin
+      this.connectSocket();
+      this.loadNotifications();
+      this.setupNotificationListeners();
+    } else {
+      // Ensure editors don't see or use notifications
+      this.notificationCount.set(0);
+      this.showNotificationDropdown.set(false);
+      this.notifications.set([]);
+    }
   }
 
   ngOnDestroy(): void {
