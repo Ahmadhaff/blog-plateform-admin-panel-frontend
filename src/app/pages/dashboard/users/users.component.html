@@ -1,0 +1,345 @@
+<div class="users-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2 class="page-title">
+        <span class="material-symbols-rounded">groups</span>
+        Users Management
+      </h2>
+      <p class="page-subtitle">Manage all users in the platform</p>
+    </div>
+    <div class="header-actions">
+      <div class="stats-summary">
+        <span class="stat-summary-item">
+          <span class="material-symbols-rounded">people</span>
+          <span>{{ pagination()?.total || 0 }} Total</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="search-box">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="text"
+          placeholder="Search users by username or email..."
+          [value]="filters().search"
+          (input)="onSearchChange(($any($event.target)).value)"
+          class="search-input" />
+      </div>
+      <div class="filter-group">
+        <select
+          [value]="filters().role || ''"
+          (change)="onRoleChange(($any($event.target)).value)"
+          class="filter-select">
+          @for (option of roleOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="filter-group">
+        <select
+          [value]="filters().isActive ?? ''"
+          (change)="onStatusChange(($any($event.target)).value)"
+          class="filter-select">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading users...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-container">
+      <span class="material-symbols-rounded">error</span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="loadUsers()" class="retry-btn">Retry</button>
+    </div>
+  }
+
+  <!-- Users Table -->
+  @if (!loading() && !error()) {
+    @if (users().length > 0) {
+      <div class="users-table-wrapper">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Verified</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user._id) {
+              <tr>
+                <td class="user-cell">
+                  <div class="user-info">
+                    @if (getAvatarUrl(user)) {
+                      <img [src]="getAvatarUrl(user)!" [alt]="user.username" class="user-avatar" />
+                    } @else {
+                      <div class="user-avatar-placeholder">
+                        <span class="material-symbols-rounded">account_circle</span>
+                      </div>
+                    }
+                    <div class="user-details">
+                      <h4 class="user-name">{{ user.username }}</h4>
+                      @if (isCurrentUser(user)) {
+                        <span class="user-badge user-badge--current">You</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="email-cell">
+                  {{ user.email }}
+                </td>
+                <td>
+                  <span 
+                    class="role-badge" 
+                    [style.background-color]="getRoleBgColor(user.role)"
+                    [style.color]="getRoleColor(user.role)">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td>
+                  @if (user.isActive) {
+                    <span class="status-badge status-badge--active">
+                      <span class="status-dot"></span>
+                      Active
+                    </span>
+                  } @else {
+                    <span class="status-badge status-badge--suspended">
+                      <span class="status-dot"></span>
+                      Suspended
+                    </span>
+                  }
+                </td>
+                <td>
+                  @if (user.verified) {
+                    <span class="verified-badge verified-badge--yes">
+                      <span class="material-symbols-rounded">check_circle</span>
+                      Verified
+                    </span>
+                  } @else {
+                    <span class="verified-badge verified-badge--no">
+                      <span class="material-symbols-rounded">cancel</span>
+                      Unverified
+                    </span>
+                  }
+                </td>
+                <td class="date-cell">
+                  {{ formatDate(user.createdAt) }}
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    @if (isAdmin()) {
+                      <button 
+                        type="button" 
+                        (click)="openRoleModal(user)"
+                        class="action-btn action-btn--role"
+                        title="Change role">
+                        <span class="material-symbols-rounded">admin_panel_settings</span>
+                      </button>
+                    }
+                    <button 
+                      type="button" 
+                      (click)="openStatusModal(user)"
+                      [disabled]="isCurrentUser(user)"
+                      class="action-btn"
+                      [class.action-btn--suspend]="user.isActive"
+                      [class.action-btn--activate]="!user.isActive"
+                      [title]="isCurrentUser(user) ? 'Cannot suspend your own account' : (user.isActive ? 'Suspend account' : 'Activate account')">
+                      @if (user.isActive) {
+                        <span class="material-symbols-rounded">block</span>
+                      } @else {
+                        <span class="material-symbols-rounded">check_circle</span>
+                      }
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination() && pagination().pages > 1) {
+        <div class="pagination">
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="pagination-btn pagination-btn--prev">
+            <span class="material-symbols-rounded">chevron_left</span>
+            Previous
+          </button>
+          
+          <div class="pagination-info">
+            <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+            <span class="pagination-total">{{ pagination()?.total || 0 }} users</span>
+          </div>
+
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="pagination-btn pagination-btn--next">
+            Next
+            <span class="material-symbols-rounded">chevron_right</span>
+          </button>
+        </div>
+      }
+    } @else {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">people</span>
+        <h3>No users found</h3>
+        <p>Try adjusting your search or filter criteria</p>
+      </div>
+    }
+  }
+
+  <!-- Role Change Modal -->
+  @if (showRoleModal()) {
+    <div class="modal-overlay" (click)="closeRoleModal()">
+      <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Change User Role</h3>
+          <button type="button" (click)="closeRoleModal()" class="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="user-info-section">
+            <div class="user-info-display">
+              @if (getAvatarUrl(selectedUser()!)) {
+                <img [src]="getAvatarUrl(selectedUser()!)!" [alt]="selectedUser()!.username" class="user-avatar-large" />
+              } @else {
+                <div class="user-avatar-large-placeholder">
+                  <span class="material-symbols-rounded">account_circle</span>
+                </div>
+              }
+              <div>
+                <h4>{{ selectedUser()!.username }}</h4>
+                <p>{{ selectedUser()!.email }}</p>
+                <span 
+                  class="role-badge" 
+                  [style.background-color]="getRoleBgColor(selectedUser()!.role)"
+                  [style.color]="getRoleColor(selectedUser()!.role)">
+                  Current: {{ selectedUser()!.role }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="role" class="form-label">New Role</label>
+            <select
+              id="role"
+              [(ngModel)]="selectedRole"
+              class="form-select">
+              @for (role of availableRoles; track role.value) {
+                <option [value]="role.value">{{ role.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeRoleModal()" class="btn btn--secondary">Cancel</button>
+            <button 
+              type="button" 
+              (click)="onUpdateRole()"
+              [disabled]="loading() || selectedRole === selectedUser()!.role"
+              class="btn btn--primary">
+              @if (loading()) {
+                <span class="spinner-small"></span>
+                Updating...
+              } @else {
+                Update Role
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Status Toggle Modal -->
+  @if (showStatusModal()) {
+    <div class="modal-overlay" (click)="closeStatusModal()">
+      <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">{{ selectedUser()!.isActive ? 'Suspend' : 'Activate' }} User Account</h3>
+          <button type="button" (click)="closeStatusModal()" class="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="status-confirmation">
+            <span class="material-symbols-rounded">{{ selectedUser()!.isActive ? 'warning' : 'check_circle' }}</span>
+            <p>Are you sure you want to {{ selectedUser()!.isActive ? 'suspend' : 'activate' }} this user account?</p>
+            <div class="user-info-display">
+              @if (getAvatarUrl(selectedUser()!)) {
+                <img [src]="getAvatarUrl(selectedUser()!)!" [alt]="selectedUser()!.username" class="user-avatar-medium" />
+              } @else {
+                <div class="user-avatar-medium-placeholder">
+                  <span class="material-symbols-rounded">account_circle</span>
+                </div>
+              }
+              <div>
+                <h4>{{ selectedUser()!.username }}</h4>
+                <p>{{ selectedUser()!.email }}</p>
+                <span 
+                  class="role-badge" 
+                  [style.background-color]="getRoleBgColor(selectedUser()!.role)"
+                  [style.color]="getRoleColor(selectedUser()!.role)">
+                  {{ selectedUser()!.role }}
+                </span>
+              </div>
+            </div>
+            <p class="status-warning">
+              {{ selectedUser()!.isActive 
+                ? 'The user will not be able to access the platform until their account is reactivated.' 
+                : 'The user will be able to access the platform once their account is activated.' }}
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeStatusModal()" class="btn btn--secondary">Cancel</button>
+            <button 
+              type="button" 
+              (click)="onToggleStatus()"
+              [disabled]="loading()"
+              class="btn"
+              [class.btn--danger]="selectedUser()!.isActive"
+              [class.btn--primary]="!selectedUser()!.isActive">
+              @if (loading()) {
+                <span class="spinner-small"></span>
+                {{ selectedUser()!.isActive ? 'Suspending...' : 'Activating...' }}
+              } @else {
+                <span class="material-symbols-rounded">{{ selectedUser()!.isActive ? 'block' : 'check_circle' }}</span>
+                {{ selectedUser()!.isActive ? 'Suspend Account' : 'Activate Account' }}
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

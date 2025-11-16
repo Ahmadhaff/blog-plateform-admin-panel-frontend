@@ -1,0 +1,285 @@
+<div class="editors-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2 class="page-title">
+        <span class="material-symbols-rounded">edit</span>
+        Editors Management
+      </h2>
+      <p class="page-subtitle">Create and manage editors in the platform</p>
+    </div>
+    <div class="header-actions">
+      @if (isAdmin()) {
+        <button type="button" (click)="openCreateModal()" class="btn btn--primary">
+          <span class="material-symbols-rounded">add</span>
+          Create Editor
+        </button>
+      }
+      <div class="stats-summary">
+        <span class="stat-summary-item">
+          <span class="material-symbols-rounded">people</span>
+          <span>{{ pagination()?.total || 0 }} Editors</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="search-box">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="text"
+          placeholder="Search editors by username or email..."
+          [value]="filters().search"
+          (input)="onSearchChange(($any($event.target)).value)"
+          class="search-input" />
+      </div>
+      <div class="filter-group">
+        <select
+          [value]="filters().isActive ?? ''"
+          (change)="onStatusChange(($any($event.target)).value)"
+          class="filter-select">
+          <option value="">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Suspended</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  @if (success() && !loading()) {
+    <div class="success-container">
+      <span class="material-symbols-rounded">check_circle</span>
+      <p>{{ success() }}</p>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading() && editors().length === 0) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading editors...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-container">
+      <span class="material-symbols-rounded">error</span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="loadEditors()" class="retry-btn">Retry</button>
+    </div>
+  }
+
+  <!-- Editors Table -->
+  @if (!loading() && !error()) {
+    @if (editors().length > 0) {
+      <div class="editors-table-wrapper">
+        <table class="editors-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Verified</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (editor of editors(); track editor._id) {
+              <tr>
+                <td class="user-cell">
+                  <div class="user-info">
+                    @if (getAvatarUrl(editor)) {
+                      <img [src]="getAvatarUrl(editor)!" [alt]="editor.username" class="user-avatar" />
+                    } @else {
+                      <div class="user-avatar-placeholder">
+                        <span class="material-symbols-rounded">account_circle</span>
+                      </div>
+                    }
+                    <div class="user-details">
+                      <h4 class="user-name">{{ editor.username }}</h4>
+                    </div>
+                  </div>
+                </td>
+                <td class="email-cell">
+                  {{ editor.email }}
+                </td>
+                <td>
+                  @if (editor.isActive) {
+                    <span class="status-badge status-badge--active">
+                      <span class="status-dot"></span>
+                      Active
+                    </span>
+                  } @else {
+                    <span class="status-badge status-badge--suspended">
+                      <span class="status-dot"></span>
+                      Suspended
+                    </span>
+                  }
+                </td>
+                <td>
+                  @if (editor.verified) {
+                    <span class="verified-badge verified-badge--yes">
+                      <span class="material-symbols-rounded">check_circle</span>
+                      Verified
+                    </span>
+                  } @else {
+                    <span class="verified-badge verified-badge--no">
+                      <span class="material-symbols-rounded">cancel</span>
+                      Unverified
+                    </span>
+                  }
+                </td>
+                <td class="date-cell">
+                  {{ formatDate(editor.createdAt) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination() && pagination().pages > 1) {
+        <div class="pagination">
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="pagination-btn pagination-btn--prev">
+            <span class="material-symbols-rounded">chevron_left</span>
+            Previous
+          </button>
+          
+          <div class="pagination-info">
+            <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+            <span class="pagination-total">{{ pagination()?.total || 0 }} editors</span>
+          </div>
+
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="pagination-btn pagination-btn--next">
+            Next
+            <span class="material-symbols-rounded">chevron_right</span>
+          </button>
+        </div>
+      }
+    } @else {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">edit</span>
+        <h3>No editors found</h3>
+        <p>@if (isAdmin()) { Create your first editor to get started } @else { No editors in the system }</p>
+        @if (isAdmin()) {
+          <button type="button" (click)="openCreateModal()" class="btn btn--primary">
+            <span class="material-symbols-rounded">add</span>
+            Create Editor
+          </button>
+        }
+      </div>
+    }
+  }
+
+  <!-- Create Editor Modal -->
+  @if (showCreateModal()) {
+    <div class="modal-overlay" (click)="closeCreateModal()">
+      <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Create New Editor</h3>
+          <button type="button" (click)="closeCreateModal()" class="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          @if (error()) {
+            <div class="error-message">
+              <span class="material-symbols-rounded">error</span>
+              <p>{{ error() }}</p>
+            </div>
+          }
+
+          <form [formGroup]="createEditorForm" (ngSubmit)="onCreateEditor()">
+            <div class="form-group">
+              <label for="email" class="form-label">
+                Email <span class="required">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                formControlName="email"
+                class="form-input"
+                [class.invalid]="emailControl?.invalid && emailControl?.touched"
+                placeholder="editor@example.com" />
+              @if (emailControl?.invalid && emailControl?.touched) {
+                <div class="form-error">
+                  @if (emailControl?.errors?.['required']) {
+                    <span>Email is required</span>
+                  } @else if (emailControl?.errors?.['email']) {
+                    <span>Invalid email format</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="password" class="form-label">
+                Password <span class="required">*</span>
+              </label>
+              <input
+                type="password"
+                id="password"
+                formControlName="password"
+                class="form-input"
+                [class.invalid]="passwordControl?.invalid && passwordControl?.touched"
+                placeholder="At least 8 characters" />
+              @if (passwordControl?.invalid && passwordControl?.touched) {
+                <div class="form-error">
+                  @if (passwordControl?.errors?.['required']) {
+                    <span>Password is required</span>
+                  } @else if (passwordControl?.errors?.['minlength']) {
+                    <span>Password must be at least 8 characters</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="username" class="form-label">
+                Username <span class="optional">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                id="username"
+                formControlName="username"
+                class="form-input"
+                placeholder="Leave empty to use email prefix" />
+              <p class="form-hint">If not provided, username will be generated from email</p>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" (click)="closeCreateModal()" class="btn btn--secondary">Cancel</button>
+              <button 
+                type="submit"
+                [disabled]="loading() || createEditorForm.invalid"
+                class="btn btn--primary">
+                @if (loading()) {
+                  <span class="spinner-small"></span>
+                  Creating...
+                } @else {
+                  <span class="material-symbols-rounded">add</span>
+                  Create Editor
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

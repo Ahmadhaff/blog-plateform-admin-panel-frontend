@@ -1,0 +1,187 @@
+<div class="dashboard" [class.sidebar-open]="sidebarOpen()">
+  <!-- Sidebar Backdrop (Mobile only) -->
+  @if (sidebarOpen()) {
+    <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
+  }
+  
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.sidebar-collapsed]="!sidebarOpen()" [class.sidebar-visible]="sidebarOpen()">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span class="material-symbols-rounded">dashboard</span>
+        @if (sidebarOpen()) {
+          <span class="sidebar-title">Admin Panel</span>
+        }
+      </div>
+      <button type="button" (click)="toggleSidebar()" class="sidebar-toggle">
+        <span class="material-symbols-rounded">{{ sidebarOpen() ? 'menu_open' : 'menu' }}</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a routerLink="/dashboard/overview" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link" (click)="closeSidebarOnMobile()">
+            <span class="material-symbols-rounded">home</span>
+            @if (sidebarOpen()) {
+              <span class="nav-text">Overview</span>
+            }
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/dashboard/articles" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+            <span class="material-symbols-rounded">article</span>
+            @if (sidebarOpen()) {
+              <span class="nav-text">Articles</span>
+            }
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/dashboard/users" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+            <span class="material-symbols-rounded">people</span>
+            @if (sidebarOpen()) {
+              <span class="nav-text">Users</span>
+            }
+          </a>
+        </li>
+        @if (isAdmin()) {
+          <li class="nav-item">
+            <a routerLink="/dashboard/editors" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()">
+              <span class="material-symbols-rounded">edit</span>
+              @if (sidebarOpen()) {
+                <span class="nav-text">Editors</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button type="button" (click)="logout()" class="sidebar-logout" [title]="sidebarOpen() ? '' : 'Logout'">
+        <span class="material-symbols-rounded">logout</span>
+        @if (sidebarOpen()) {
+          <span>Logout</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="dashboard-main">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <button type="button" (click)="toggleSidebar()" class="mobile-menu-toggle">
+            <span class="material-symbols-rounded">menu</span>
+          </button>
+          <div>
+            <h1 class="dashboard-title">Dashboard</h1>
+            <p class="dashboard-subtitle">Welcome back, <strong>{{ currentUser()?.username || 'Admin' }}</strong></p>
+          </div>
+        </div>
+        <div class="header-right">
+          <!-- Notifications Icon -->
+          <div class="notification-container">
+            <button 
+              type="button" 
+              class="header-icon-btn" 
+              [class.has-notifications]="hasNotifications()" 
+              (click)="toggleNotificationDropdown()"
+              title="Notifications">
+              <span class="material-symbols-rounded">notifications</span>
+              @if (hasNotifications()) {
+                <span class="notification-badge">{{ notificationCount() > 99 ? '99+' : notificationCount() }}</span>
+              }
+            </button>
+
+            @if (showNotificationDropdown()) {
+              <div class="notification-dropdown" (click)="$event.stopPropagation()">
+                <div class="notification-dropdown__header">
+                  <h3>Notifications</h3>
+                  @if (notificationCount() > 0) {
+                    <button 
+                      type="button" 
+                      class="mark-all-read-btn"
+                      (click)="markAllAsRead()">
+                      Mark all as read
+                    </button>
+                  }
+                </div>
+                <div class="notification-dropdown__body">
+                  @if (notifications().length > 0) {
+                    @for (notification of notifications(); track notification._id || notification.id) {
+                      <div 
+                        class="notification-item"
+                        [class.unread]="!notification.read"
+                        (click)="onNotificationClick(notification)">
+                        <div class="notification-item__icon">
+                          @switch (notification.type) {
+                            @case ('new_article') {
+                              <span class="material-symbols-rounded">article</span>
+                            }
+                            @case ('new_comment') {
+                              <span class="material-symbols-rounded">comment</span>
+                            }
+                            @case ('comment_reply') {
+                              <span class="material-symbols-rounded">reply</span>
+                            }
+                            @case ('article_liked') {
+                              <span class="material-symbols-rounded">favorite</span>
+                            }
+                            @case ('comment_liked') {
+                              <span class="material-symbols-rounded">thumb_up</span>
+                            }
+                            @default {
+                              <span class="material-symbols-rounded">notifications</span>
+                            }
+                          }
+                        </div>
+                        <div class="notification-item__content">
+                          <div class="notification-item__title">{{ notification.title }}</div>
+                          <div class="notification-item__message">{{ notification.message }}</div>
+                          <div class="notification-item__time">{{ notification.createdAt | date:'short' }}</div>
+                        </div>
+                        @if (!notification.read) {
+                          <div class="notification-item__indicator"></div>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <div class="notification-empty">
+                      <span class="material-symbols-rounded">notifications_off</span>
+                      <p>No notifications</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          
+          <!-- User Info -->
+          <div class="header-user">
+            <div class="header-avatar">
+              @if (getAvatarUrl()) {
+                <img [src]="getAvatarUrl()!" [alt]="currentUser()?.username || 'Admin'" class="avatar-img" />
+              } @else {
+                <div class="avatar-placeholder">
+                  <span class="material-symbols-rounded">account_circle</span>
+                </div>
+              }
+            </div>
+            <div class="header-user-info">
+              <div class="header-username">{{ currentUser()?.username || 'Admin' }}</div>
+              <div class="header-role">{{ currentUser()?.role || 'Admin' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Router Outlet for child routes -->
+    <div class="dashboard-content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

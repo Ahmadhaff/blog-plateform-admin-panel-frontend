@@ -1,0 +1,436 @@
+<div class="overview-page">
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading dashboard data...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-container">
+      <span class="material-symbols-rounded">error</span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="loadDashboard()" class="retry-btn">Retry</button>
+    </div>
+  }
+
+  <!-- Dashboard Content -->
+  @if (!loading() && !error() && overview()) {
+    <div class="overview-content">
+      <!-- Stats Cards Section -->
+      <section class="stats-section">
+        <h2 class="section-heading">
+          <span class="material-symbols-rounded">dashboard</span>
+          Overview Statistics
+        </h2>
+        <div class="stats-grid">
+          <!-- Total Articles - Row 1, Col 1-2 (Wider) -->
+          <div class="stat-card stat-card--articles stat-card--wide">
+            <div class="stat-card__background"></div>
+            <div class="stat-card__content">
+              <div class="stat-card__header">
+                <div class="stat-icon stat-icon--blue">
+                  <span class="material-symbols-rounded">description</span>
+                </div>
+                <div class="stat-meta">
+                  <span class="stat-label">Total Articles</span>
+                  <span class="stat-trend">
+                    <span class="material-symbols-rounded">trending_up</span>
+                    Content library
+                  </span>
+                </div>
+              </div>
+              <div class="stat-card__body">
+                <h3 class="stat-value">{{ overview()!.totalArticles }}</h3>
+                <div class="stat-breakdown">
+                  <div class="breakdown-item breakdown-item--published">
+                    <span class="breakdown-dot"></span>
+                    <span class="breakdown-label">Published</span>
+                    <span class="breakdown-value">{{ overview()!.publishedArticles }}</span>
+                  </div>
+                  <div class="breakdown-item breakdown-item--draft">
+                    <span class="breakdown-dot"></span>
+                    <span class="breakdown-label">Drafts</span>
+                    <span class="breakdown-value">{{ overview()!.draftArticles }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Users - Row 1, Col 3 -->
+          <div class="stat-card stat-card--users">
+            <div class="stat-card__background"></div>
+            <div class="stat-card__content">
+              <div class="stat-card__header">
+                <div class="stat-icon stat-icon--green">
+                  <span class="material-symbols-rounded">groups</span>
+                </div>
+                <div class="stat-meta">
+                  <span class="stat-label">Total Users</span>
+                  <span class="stat-trend">
+                    <span class="material-symbols-rounded">person_add</span>
+                    Platform
+                  </span>
+                </div>
+              </div>
+              <div class="stat-card__body">
+                <h3 class="stat-value">{{ overview()!.totalUsers }}</h3>
+                <div class="stat-breakdown">
+                  <div class="breakdown-item breakdown-item--active">
+                    <span class="breakdown-dot"></span>
+                    <span class="breakdown-label">Active</span>
+                    <span class="breakdown-value">{{ overview()!.activeUsers }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Views - Row 2, Col 1 -->
+          <div class="stat-card stat-card--views">
+            <div class="stat-card__background"></div>
+            <div class="stat-card__content">
+              <div class="stat-card__header">
+                <div class="stat-icon stat-icon--purple">
+                  <span class="material-symbols-rounded">analytics</span>
+                </div>
+                <div class="stat-meta">
+                  <span class="stat-label">Total Views</span>
+                  <span class="stat-trend">
+                    <span class="material-symbols-rounded">show_chart</span>
+                    Engagement
+                  </span>
+                </div>
+              </div>
+              <div class="stat-card__body">
+                <h3 class="stat-value">{{ formatNumber(overview()!.totalViews) }}</h3>
+                <div class="stat-description">
+                  <span class="material-symbols-rounded">insights</span>
+                  Article views
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Comments - Row 2, Col 2 -->
+          <div class="stat-card stat-card--comments">
+            <div class="stat-card__background"></div>
+            <div class="stat-card__content">
+              <div class="stat-card__header">
+                <div class="stat-icon stat-icon--orange">
+                  <span class="material-symbols-rounded">chat_bubble_outline</span>
+                </div>
+                <div class="stat-meta">
+                  <span class="stat-label">Total Comments</span>
+                  <span class="stat-trend">
+                    <span class="material-symbols-rounded">forum</span>
+                    Discussions
+                  </span>
+                </div>
+              </div>
+              <div class="stat-card__body">
+                <h3 class="stat-value">{{ overview()!.totalComments }}</h3>
+                <div class="stat-description">
+                  <span class="material-symbols-rounded">question_answer</span>
+                  User comments
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Likes - Row 2, Col 3 -->
+          <div class="stat-card stat-card--likes">
+            <div class="stat-card__background"></div>
+            <div class="stat-card__content">
+              <div class="stat-card__header">
+                <div class="stat-icon stat-icon--pink">
+                  <span class="material-symbols-rounded">thumb_up</span>
+                </div>
+                <div class="stat-meta">
+                  <span class="stat-label">Total Likes</span>
+                  <span class="stat-trend">
+                    <span class="material-symbols-rounded">recommend</span>
+                    Feedback
+                  </span>
+                </div>
+              </div>
+              <div class="stat-card__body">
+                <h3 class="stat-value">{{ overview()!.totalLikes }}</h3>
+                <div class="stat-description">
+                  <span class="material-symbols-rounded">favorite</span>
+                  User likes
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Section -->
+      <section class="charts-section">
+        <h2 class="section-heading">
+          <span class="material-symbols-rounded">bar_chart</span>
+          Analytics & Insights
+        </h2>
+        <div class="charts-grid">
+          <!-- Articles by Status Donut Chart -->
+          <div class="chart-wrapper">
+            <div class="chart-header-modern">
+              <div>
+                <h3 class="chart-title-modern">Articles by Status</h3>
+                <p class="chart-subtitle-modern">Content distribution overview</p>
+              </div>
+              <div class="chart-actions">
+                <button type="button" class="chart-action-btn" title="View details">
+                  <span class="material-symbols-rounded">more_vert</span>
+                </button>
+              </div>
+            </div>
+            <div class="chart-body-modern">
+              @if (statusChartData().labels.length > 0) {
+                <div class="donut-chart-container">
+                  <div class="donut-chart-visual">
+                    <svg viewBox="0 0 240 240" class="donut-svg">
+                      <!-- Background circle -->
+                      <circle 
+                        cx="120" 
+                        cy="120" 
+                        r="90" 
+                        fill="none" 
+                        stroke="#f1f5f9" 
+                        stroke-width="24"/>
+                      
+                      @for (value of statusChartData().values; track $index) {
+                        <circle
+                          cx="120"
+                          cy="120"
+                          r="90"
+                          fill="none"
+                          [attr.stroke]="statusChartData().colors[$index]"
+                          stroke-width="24"
+                          [attr.stroke-dasharray]="getPieChartDashArray($index)"
+                          [attr.stroke-dashoffset]="getPieChartOffset($index)"
+                          stroke-linecap="round"
+                          transform="rotate(-90 120 120)"/>
+                      }
+                    </svg>
+                    <div class="donut-center">
+                      <span class="donut-total">{{ overview()!.totalArticles }}</span>
+                      <span class="donut-label">Articles</span>
+                    </div>
+                  </div>
+                  <div class="donut-legend">
+                    @for (item of articlesByStatus(); track item.status) {
+                      <div class="legend-item-modern">
+                        <div class="legend-dot-modern" [style.background-color]="getStatusColor(item.status)"></div>
+                        <div class="legend-info">
+                          <span class="legend-name">{{ item.status?.charAt(0).toUpperCase() + item.status?.slice(1) }}</span>
+                          <span class="legend-percentage">{{ overview()!.totalArticles > 0 ? ((item.count / overview()!.totalArticles) * 100).toFixed(1) : 0 }}%</span>
+                        </div>
+                        <span class="legend-count">{{ item.count }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="no-data-modern">
+                  <span class="material-symbols-rounded">data_object</span>
+                  <p>No data available</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Articles by Month Bar Chart -->
+          <div class="chart-wrapper">
+            <div class="chart-header-modern">
+              <div>
+                <h3 class="chart-title-modern">Articles by Month</h3>
+                <p class="chart-subtitle-modern">Content creation trends</p>
+              </div>
+              <div class="chart-actions">
+                <button type="button" class="chart-action-btn" title="View details">
+                  <span class="material-symbols-rounded">more_vert</span>
+                </button>
+              </div>
+            </div>
+            <div class="chart-body-modern">
+              @if (monthChartData().labels.length > 0) {
+                <div class="bar-chart-modern">
+                  <div class="bar-chart-container-modern">
+                    @for (item of articlesByMonth(); track item.month; let i = $index) {
+                      <div class="bar-item-modern">
+                        <div class="bar-label-modern">{{ item.month }}</div>
+                        <div class="bar-track-modern">
+                          <div 
+                            class="bar-fill-modern" 
+                            [style.width.%]="monthChartData().maxValue > 0 ? (item.count / monthChartData().maxValue) * 100 : 0"
+                            [style.animation-delay]="i * 0.1 + 's'">
+                            <span class="bar-value-modern">{{ item.count }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="no-data-modern">
+                  <span class="material-symbols-rounded">data_object</span>
+                  <p>No data available</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tables Section -->
+      <section class="tables-section">
+        <h2 class="section-heading">
+          <span class="material-symbols-rounded">table_chart</span>
+          Content Performance
+        </h2>
+        <div class="tables-grid">
+          <!-- Top Articles Table -->
+          <div class="table-wrapper">
+            <div class="table-header-modern">
+              <div>
+                <h3 class="table-title-modern">Top Performing Articles</h3>
+                <p class="table-subtitle-modern">Most viewed and liked content</p>
+              </div>
+              <div class="table-actions">
+                <button type="button" class="table-action-btn" title="View all">
+                  <span class="material-symbols-rounded">open_in_new</span>
+                </button>
+              </div>
+            </div>
+            <div class="table-body-modern">
+              @if (topArticles().length > 0) {
+                <div class="modern-table-container">
+                  <table class="modern-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Article Title</th>
+                        <th>Author</th>
+                        <th>Views</th>
+                        <th>Likes</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (article of topArticles(); track article.id; let i = $index) {
+                        <tr>
+                          <td class="rank-cell">
+                            <span class="rank-badge" [class.rank-badge--top]="i < 3">
+                              {{ i + 1 }}
+                            </span>
+                          </td>
+                          <td class="title-cell">
+                            <span class="article-title-modern">{{ article.title }}</span>
+                          </td>
+                          <td>
+                            <div class="author-cell">
+                              <span class="material-symbols-rounded">person</span>
+                              <span>{{ article.author || 'Unknown' }}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="metric-cell metric-cell--views">
+                              <span class="material-symbols-rounded">visibility</span>
+                              <span>{{ article.views }}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="metric-cell metric-cell--likes">
+                              <span class="material-symbols-rounded">favorite</span>
+                              <span>{{ article.likes }}</span>
+                            </div>
+                          </td>
+                          <td class="date-cell">
+                            {{ article.createdAt | date:'MMM d, y' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="no-data-modern">
+                  <span class="material-symbols-rounded">article</span>
+                  <p>No articles available</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Recent Articles Table -->
+          <div class="table-wrapper">
+            <div class="table-header-modern">
+              <div>
+                <h3 class="table-title-modern">Recent Articles</h3>
+                <p class="table-subtitle-modern">Latest published content</p>
+              </div>
+              <div class="table-actions">
+                <button type="button" class="table-action-btn" title="View all">
+                  <span class="material-symbols-rounded">open_in_new</span>
+                </button>
+              </div>
+            </div>
+            <div class="table-body-modern">
+              @if (recentArticles().length > 0) {
+                <div class="modern-table-container">
+                  <table class="modern-table">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (article of recentArticles(); track article.id) {
+                        <tr>
+                          <td class="title-cell">
+                            <span class="article-title-modern">{{ article.title }}</span>
+                          </td>
+                          <td>
+                            <div class="author-cell">
+                              <span class="material-symbols-rounded">person</span>
+                              <span>{{ article.author || 'Unknown' }}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span 
+                              class="status-badge-modern" 
+                              [style.background-color]="getStatusBgColor(article.status)"
+                              [style.color]="getStatusColor(article.status)">
+                              <span class="status-dot" [style.background-color]="getStatusColor(article.status)"></span>
+                              {{ article.status?.charAt(0).toUpperCase() + article.status?.slice(1) }}
+                            </span>
+                          </td>
+                          <td class="date-cell">
+                            {{ article.createdAt | date:'MMM d, y' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="no-data-modern">
+                  <span class="material-symbols-rounded">article</span>
+                  <p>No recent articles</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  }
+</div>

@@ -1,0 +1,328 @@
+<div class="articles-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h2 class="page-title">
+        <span class="material-symbols-rounded">description</span>
+        Articles Management
+      </h2>
+      <p class="page-subtitle">Manage and edit all articles in the platform</p>
+    </div>
+    <div class="header-actions">
+      <div class="stats-summary">
+        <span class="stat-summary-item">
+          <span class="material-symbols-rounded">article</span>
+          <span>{{ pagination()?.total || 0 }} Total</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="search-box">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="text"
+          placeholder="Search articles by title or content..."
+          [value]="filters().search"
+          (input)="onSearchChange(($any($event.target)).value)"
+          class="search-input" />
+      </div>
+      <div class="filter-group">
+        <select
+          [value]="filters().status || ''"
+          (change)="onStatusChange(($any($event.target)).value)"
+          class="filter-select">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading articles...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <div class="error-container">
+      <span class="material-symbols-rounded">error</span>
+      <p>{{ error() }}</p>
+      <button type="button" (click)="loadArticles()" class="retry-btn">Retry</button>
+    </div>
+  }
+
+  <!-- Articles Table -->
+  @if (!loading() && !error()) {
+    @if (articles().length > 0) {
+      <div class="articles-table-wrapper">
+        <table class="articles-table">
+          <thead>
+            <tr>
+              <th>Article</th>
+              <th>Author</th>
+              <th>Status</th>
+              <th>Views</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (article of articles(); track article.id) {
+              <tr 
+                [id]="'article-' + article.id"
+                [class.highlighted]="highlightedArticleId() === article.id">
+                <td class="article-cell">
+                  <div class="article-info">
+                    @if (getImageUrl(article)) {
+                      <img [src]="getImageUrl(article)!" [alt]="article.title" class="article-thumb" />
+                    } @else {
+                      <div class="article-thumb-placeholder">
+                        <span class="material-symbols-rounded">image</span>
+                      </div>
+                    }
+                    <div class="article-details">
+                      <h4 class="article-title">{{ article.title }}</h4>
+                      <div class="article-tags">
+                        @for (tag of article.tags.slice(0, 3); track tag) {
+                          <span class="tag-badge">{{ tag }}</span>
+                        }
+                        @if (article.tags.length > 3) {
+                          <span class="tag-more">+{{ article.tags.length - 3 }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="author-cell">
+                    <span class="material-symbols-rounded">person</span>
+                    <span>{{ getAuthorName(article) }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span 
+                    class="status-badge" 
+                    [style.background-color]="getStatusBgColor(article.status)"
+                    [style.color]="getStatusColor(article.status)">
+                    <span class="status-dot" [style.background-color]="getStatusColor(article.status)"></span>
+                    {{ article.status.charAt(0).toUpperCase() + article.status.slice(1) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="metric-cell metric-cell--views">
+                    <span class="material-symbols-rounded">visibility</span>
+                    <span>{{ article.views }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="metric-cell metric-cell--likes">
+                    <span class="material-symbols-rounded">favorite</span>
+                    <span>{{ article.likesCount || 0 }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="metric-cell metric-cell--comments">
+                    <span class="material-symbols-rounded">comment</span>
+                    <span>{{ article.commentCount || 0 }}</span>
+                  </div>
+                </td>
+                <td class="date-cell">
+                  {{ formatDate(article.createdAt) }}
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button 
+                      type="button" 
+                      (click)="openEditModal(article)"
+                      class="action-btn action-btn--edit"
+                      title="Edit article">
+                      <span class="material-symbols-rounded">edit</span>
+                    </button>
+                    @if (isAdmin()) {
+                      <button 
+                        type="button" 
+                        (click)="openDeleteModal(article)"
+                        class="action-btn action-btn--delete"
+                        title="Delete article">
+                        <span class="material-symbols-rounded">delete</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (pagination() && pagination().pages > 1) {
+        <div class="pagination">
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() - 1)"
+            [disabled]="currentPage() === 1"
+            class="pagination-btn pagination-btn--prev">
+            <span class="material-symbols-rounded">chevron_left</span>
+            Previous
+          </button>
+          
+          <div class="pagination-info">
+            <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+            <span class="pagination-total">{{ pagination()?.total || 0 }} articles</span>
+          </div>
+
+          <button 
+            type="button"
+            (click)="onPageChange(currentPage() + 1)"
+            [disabled]="currentPage() === totalPages()"
+            class="pagination-btn pagination-btn--next">
+            Next
+            <span class="material-symbols-rounded">chevron_right</span>
+          </button>
+        </div>
+      }
+    } @else {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">article</span>
+        <h3>No articles found</h3>
+        <p>Try adjusting your search or filter criteria</p>
+      </div>
+    }
+  }
+
+  <!-- Edit Article Modal -->
+  @if (showEditModal()) {
+    <div class="modal-overlay" (click)="closeEditModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Article</h3>
+          <button type="button" (click)="closeEditModal()" class="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <form [formGroup]="editForm" (ngSubmit)="onEditSubmit()" class="modal-body">
+          <div class="form-group">
+            <label for="title" class="form-label">Title</label>
+            <input
+              id="title"
+              type="text"
+              formControlName="title"
+              class="form-input"
+              [class.form-input--error]="editForm.get('title')?.invalid && editForm.get('title')?.touched"
+              placeholder="Article title" />
+            @if (editForm.get('title')?.invalid && editForm.get('title')?.touched) {
+              <span class="error-text">Title is required (max 200 characters)</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="content" class="form-label">Content</label>
+            <textarea
+              id="content"
+              formControlName="content"
+              rows="8"
+              class="form-textarea"
+              [class.form-textarea--error]="editForm.get('content')?.invalid && editForm.get('content')?.touched"
+              placeholder="Article content"></textarea>
+            @if (editForm.get('content')?.invalid && editForm.get('content')?.touched) {
+              <span class="error-text">Content is required</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="tags" class="form-label">Tags (comma-separated)</label>
+            <input
+              id="tags"
+              type="text"
+              formControlName="tags"
+              class="form-input"
+              placeholder="tag1, tag2, tag3" />
+            <span class="form-hint">Separate tags with commas</span>
+          </div>
+
+          <div class="form-group">
+            <label for="status" class="form-label">Status</label>
+            <select
+              id="status"
+              formControlName="status"
+              class="form-select"
+              [class.form-select--error]="editForm.get('status')?.invalid && editForm.get('status')?.touched">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+            @if (editForm.get('status')?.invalid && editForm.get('status')?.touched) {
+              <span class="error-text">Status is required</span>
+            }
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeEditModal()" class="btn btn--secondary">Cancel</button>
+            <button 
+              type="submit" 
+              [disabled]="editForm.invalid || loading()"
+              class="btn btn--primary">
+              @if (loading()) {
+                <span class="spinner-small"></span>
+                Saving...
+              } @else {
+                Save Changes
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-content modal-content--small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Delete Article</h3>
+          <button type="button" (click)="closeDeleteModal()" class="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="delete-confirmation">
+            <span class="material-symbols-rounded">warning</span>
+            <p>Are you sure you want to delete this article?</p>
+            <p class="delete-article-title">"{{ selectedArticle()?.title }}"</p>
+            <p class="delete-warning">This action cannot be undone. All comments associated with this article will also be deleted.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" (click)="closeDeleteModal()" class="btn btn--secondary">Cancel</button>
+            <button 
+              type="button" 
+              (click)="onDelete()"
+              [disabled]="loading()"
+              class="btn btn--danger">
+              @if (loading()) {
+                <span class="spinner-small"></span>
+                Deleting...
+              } @else {
+                <span class="material-symbols-rounded">delete</span>
+                Delete Article
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
