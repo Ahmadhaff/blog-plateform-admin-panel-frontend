@@ -12,6 +12,7 @@ export class SocketService {
   private socketUrl = 'http://localhost:3001'; // WebSocket server URL
   private notificationSubject = new Subject<NewNotificationEvent>();
   private notificationCountSubject = new Subject<NotificationCountResponse>();
+  private notificationReadSubject = new Subject<{ notificationId: string }>();
 
   /**
    * Connect to WebSocket server
@@ -59,6 +60,15 @@ export class SocketService {
   }
 
   /**
+   * Mark notification as read via socket (for real-time sync)
+   */
+  markNotificationAsRead(notificationId: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit('notification:markRead', notificationId);
+    }
+  }
+
+  /**
    * Listen for new notifications
    */
   onNewNotification(): Observable<NewNotificationEvent> {
@@ -70,6 +80,13 @@ export class SocketService {
    */
   onNotificationCount(): Observable<NotificationCountResponse> {
     return this.notificationCountSubject.asObservable();
+  }
+
+  /**
+   * Listen for notification read events (when notifications are marked as read)
+   */
+  onNotificationRead(): Observable<{ notificationId: string }> {
+    return this.notificationReadSubject.asObservable();
   }
 
   /**
@@ -113,10 +130,9 @@ export class SocketService {
       this.notificationCountSubject.next(data);
     });
 
-    // Listen for notification read events
+    // Listen for notification read events (for real-time sync across tabs)
     this.socket.on('notification:read', (data: { notificationId: string }) => {
-      // Notification was marked as read, we can update UI if needed in the future
-      // Currently no client-side updates are required here
+      this.notificationReadSubject.next(data);
     });
   }
 }

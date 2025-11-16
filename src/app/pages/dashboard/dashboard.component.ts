@@ -105,16 +105,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
             this.notifications.set([newNotif, ...currentNotifications]);
           }
           
-          // Increment notification count
-          this.notificationCount.update(count => count + 1);
+          // Don't manually increment - rely on server's notificationCount event
+          // which provides the actual unread count (excluding read notifications)
         }
       });
 
-    // Listen for notification count updates
+    // Listen for notification count updates from server
+    // This provides the actual unread count and should be the source of truth
     this.socketService.onNotificationCount()
       .pipe(takeUntil(this.destroy$))
       .subscribe((response: { count: number }) => {
         this.notificationCount.set(response.count || 0);
+      });
+
+    // Listen for notification read events (for real-time sync across tabs)
+    // When a notification is marked as read in another tab, update this tab too
+    this.socketService.onNotificationRead()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data: { notificationId: string }) => {
+        // Update notification in list if present
+        this.notifications.update(notifs =>
+          notifs.map(n => n._id === data.notificationId || n.id === data.notificationId
+            ? { ...n, read: true, readAt: new Date().toISOString() }
+            : n
+          )
+        );
+        // Count will be updated via notificationCount event from server
       });
 
     // Request initial count after connection is established
@@ -204,18 +220,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   markAsRead(notificationId: string): void {
+    // Emit socket event for real-time sync
+    this.socketService.markNotificationAsRead(notificationId);
+
+    // Call API to mark as read
     this.notificationService.markAsRead(notificationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
+          // Update notification in list
           this.notifications.update(notifs =>
             notifs.map(n => n._id === notificationId || n.id === notificationId
               ? { ...n, read: true, readAt: new Date().toISOString() }
               : n
             )
           );
-          // Update count
-          this.notificationCount.update(count => Math.max(0, count - 1));
+          // Count will be updated via notificationCount event from server
         },
         error: (error) => {
           console.error('❌ Error marking notification as read:', error);
@@ -228,9 +248,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
+          // Update all notifications in list
           this.notifications.update(notifs =>
             notifs.map(n => ({ ...n, read: true, readAt: new Date().toISOString() }))
           );
+          // Set count to 0 (server will also emit notificationCount event for sync)
           this.notificationCount.set(0);
         },
         error: (error) => {
