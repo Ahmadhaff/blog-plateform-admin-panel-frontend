@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import { NotificationService } from '../../services/notification.service';
@@ -171,9 +172,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     if (user.avatar) {
-      // Use platform-server for avatars (port 3000)
+      // Use platform-server for avatars
       // Use user._id for cache-busting instead of Date.now() to avoid change detection errors
-      return `http://localhost:3000/api/users/${user._id}/avatar?t=${user._id}`;
+      return `${environment.platformApiUrl}/users/${user._id}/avatar?t=${user._id}`;
     }
     return null;
   }

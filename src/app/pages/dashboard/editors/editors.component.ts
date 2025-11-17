@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { environment } from '../../../../environments/environment';
 import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { User, UserFilters, UserResponse } from '../../../models/user.model';
@@ -183,9 +184,9 @@ export class EditorsComponent implements OnInit {
 
   getAvatarUrl(user: User): string | null {
     if (user.avatar) {
-      // Use platform-server for avatars (port 3000)
+      // Use platform-server for avatars
       // Use user._id for cache-busting instead of Date.now() to avoid change detection errors
-      return `http://localhost:3000/api/users/${user._id}/avatar?t=${user._id}`;
+      return `${environment.platformApiUrl}/users/${user._id}/avatar?t=${user._id}`;
     }
     return null;
   }

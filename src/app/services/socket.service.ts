@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
+import { environment } from '../../environments/environment';
 import { NewNotificationEvent, NotificationCountResponse } from '../models/notification.model';
 
 @Injectable({
@@ -9,7 +10,7 @@ import { NewNotificationEvent, NotificationCountResponse } from '../models/notif
 })
 export class SocketService {
   private socket: Socket | null = null;
-  private socketUrl = 'http://localhost:3001'; // WebSocket server URL
+  private socketUrl = environment.socketUrl; // WebSocket server URL
   private notificationSubject = new Subject<NewNotificationEvent>();
   private notificationCountSubject = new Subject<NotificationCountResponse>();
   private notificationReadSubject = new Subject<{ notificationId: string }>();
