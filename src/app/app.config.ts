@@ -28,12 +28,33 @@ const authInterceptorFn: HttpInterceptorFn = (req, next) => {
     });
     return next(clonedRequest).pipe(
       catchError((error) => {
-        // Handle 401 Unauthorized - session expired
-        if (error.status === 401) {
-          // Clear tokens and user data, then navigate to login
-          authService.logout();
+        // Handle 401 Unauthorized - try to refresh token first
+        if (error.status === 401 && !req.url.includes('/auth/refresh')) {
+          const refreshToken = authService.getRefreshToken();
+          
+          // If we have a refresh token, try to refresh
+          if (refreshToken) {
+            // For admin panel, we don't have a refresh endpoint yet
+            // So just logout on 401
+            console.error('❌ 401 Unauthorized - Session expired');
+            authService.logout();
+            return throwError(() => error);
+          } else {
+            // No refresh token - logout immediately
+            console.error('❌ 401 Unauthorized - No refresh token available');
+            authService.logout();
+            return throwError(() => error);
+          }
+        }
+        
+        // Handle connection errors (ERR_CONNECTION_RESET, network errors)
+        if (error.status === 0 || error.status === null) {
+          console.error('❌ Network error or connection reset:', error);
+          // Don't logout on network errors - might be temporary
+          // Just return the error
           return throwError(() => error);
         }
+        
         return throwError(() => error);
       })
     );
