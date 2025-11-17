@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { environment } from '../../environments/environment';
 import {
   Notification,
   NotificationResponse,
@@ -13,9 +14,9 @@ import {
 })
 export class NotificationService {
   private readonly http = inject(HttpClient);
-  // Use platform-server API for notifications (port 3000)
+  // Use platform-server API for notifications
   // Admin users are in the same database and use the same notification system
-  private readonly baseUrl = 'http://localhost:3000/api/notifications';
+  private readonly baseUrl = `${environment.platformApiUrl}/notifications`;
 
   /**
    * Get user notifications with pagination
