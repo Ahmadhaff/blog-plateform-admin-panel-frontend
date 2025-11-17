@@ -21,20 +21,31 @@ export class SocketService {
    */
   connect(token: string): void {
     if (this.socket?.connected) {
+      console.log('✅ [AdminSocketService] Already connected');
       return;
+    }
+
+    // Disconnect existing socket if any
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
 
     // Log the socket URL being used (for debugging)
     console.log(`🔌 [AdminSocketService] Connecting to: ${this.socketUrl}`);
+    console.log(`🔑 [AdminSocketService] Token present: ${!!token}`);
 
     this.socket = io(this.socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling'],
-      timeout: 20000,
+      transports: ['polling', 'websocket'], // Try polling first, then websocket
+      timeout: 30000, // Increase timeout to 30 seconds
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 10,
+      forceNew: true, // Force a new connection
+      upgrade: true, // Allow transport upgrade
+      rememberUpgrade: false
     });
 
     this.setupEventListeners();
@@ -111,6 +122,7 @@ export class SocketService {
     }
 
     this.socket.on('connect', () => {
+      console.log('✅ [AdminSocketService] Connected successfully');
       this.joinUserRoom();
       
       // Request count after connection
@@ -122,11 +134,13 @@ export class SocketService {
     });
 
     this.socket.on('disconnect', (reason: string) => {
-      // Optionally handle disconnect reason if needed in the future
+      console.log(`⚠️ [AdminSocketService] Disconnected: ${reason}`);
     });
 
     this.socket.on('connect_error', (error: Error) => {
       console.error('❌ [AdminSocketService] Connection error:', error);
+      console.error('❌ [AdminSocketService] Error message:', error.message);
+      console.error('❌ [AdminSocketService] Error type:', error.name);
     });
 
     // Listen for new notifications
