@@ -24,9 +24,17 @@ export class SocketService {
       return;
     }
 
+    // Log the socket URL being used (for debugging)
+    console.log(`🔌 [AdminSocketService] Connecting to: ${this.socketUrl}`);
+
     this.socket = io(this.socketUrl, {
       auth: { token },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
     });
 
     this.setupEventListeners();

@@ -17,6 +17,11 @@ export class NotificationService {
   // Use platform-server API for notifications
   // Admin users are in the same database and use the same notification system
   private readonly baseUrl = `${environment.platformApiUrl}/notifications`;
+  
+  constructor() {
+    // Log the base URL being used (for debugging)
+    console.log(`📡 [NotificationService] Base URL: ${this.baseUrl}`);
+  }
 
   /**
    * Get user notifications with pagination
