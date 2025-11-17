@@ -5,3 +5,10 @@ export const environment = {
   socketUrl: 'http://localhost:3001' // WebSocket server URL
 };
 
+// Log to verify development environment is loaded
+console.log('⚠️ Development environment loaded:', {
+  apiUrl: environment.apiUrl,
+  platformApiUrl: environment.platformApiUrl,
+  socketUrl: environment.socketUrl
+});
+
